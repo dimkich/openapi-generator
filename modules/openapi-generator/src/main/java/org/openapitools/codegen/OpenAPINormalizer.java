@@ -360,8 +360,9 @@ public class OpenAPINormalizer {
             visitedSchemas.add(schema);
         }
 
-        if (schema instanceof ArraySchema) { // array
-            normalizeSchema(schema.getItems(), visitedSchemas);
+        if (ModelUtils.isArraySchema(schema)) {
+            Schema itemsSchema = ModelUtils.getArrayItems(schema);
+            normalizeSchema(itemsSchema, visitedSchemas);
         } else if (schema.getAdditionalProperties() instanceof Schema) { // map
             normalizeSchema((Schema) schema.getAdditionalProperties(), visitedSchemas);
         } else if (ModelUtils.isOneOf(schema)) { // oneOf
@@ -670,9 +671,9 @@ public class OpenAPINormalizer {
 
     /**
      * Check if the schema is of type 'null'
-     * 
+     *
      * Return true if the schema's type is 'null' or not specified
-     * 
+     *
      * @param schema Schema
      */
     private boolean isNullTypeSchema(Schema schema) {

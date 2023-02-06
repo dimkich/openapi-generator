@@ -4740,4 +4740,18 @@ public class DefaultCodegenTest {
         CodegenMediaType mt = content.get("application/json");
         assertNotNull(mt.getExample());
     }
+
+    @Test
+    public void testOpenAPI310ResponsesJsonSchemaIsArray() {
+        final OpenAPI openAPI = TestUtils.parseFlattenSpec("src/test/resources/3_1/petstore.yaml");
+        final DefaultCodegen codegen = new DefaultCodegen();
+        codegen.setOpenAPI(openAPI);
+
+        final String path = "/pet/findByStatus";
+
+        final Operation operation = openAPI.getPaths().get(path).getGet();
+        final CodegenOperation co = codegen.fromOperation(path, "get", operation, null);
+
+        Assert.assertTrue(co.responses.get(0).isArray);
+    }
 }
