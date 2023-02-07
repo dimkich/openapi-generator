@@ -412,7 +412,10 @@ public class ModelUtils {
      * @return true if the specified schema is an Object schema.
      */
     public static boolean isTypeObjectSchema(Schema schema) {
-        return SchemaTypeUtil.OBJECT_TYPE.equals(schema.getType());
+        if (SchemaTypeUtil.OBJECT_TYPE.equals(schema.getType())) {
+            return true;
+        }
+        return SchemaTypeUtil.OBJECT_TYPE.equals(getJsonSchemaOneTypeOnly(schema));
     }
 
     /**
@@ -421,28 +424,41 @@ public class ModelUtils {
      * A ObjectSchema differs from a MapSchema in the following way:
      * - An ObjectSchema is not extensible, i.e. it has a fixed number of properties.
      * - A MapSchema is an object that can be extended with an arbitrary set of properties.
-     *   The payload may include dynamic properties.
+     * The payload may include dynamic properties.
      * <p>
      * For example, an OpenAPI schema is considered an ObjectSchema in the following scenarios:
      * <p>
-     *
-     *   type: object
-     *   additionalProperties: false
-     *   properties:
-     *     name:
-     *       type: string
-     *     address:
-     *       type: string
+     * <p>
+     * type: object
+     * additionalProperties: false
+     * properties:
+     * name:
+     * type: string
+     * address:
+     * type: string
      *
      * @param schema the OAS schema
      * @return true if the specified schema is an Object schema.
      */
     public static boolean isObjectSchema(Schema schema) {
-        return (schema instanceof ObjectSchema) ||
-                // must not be a map
-                (SchemaTypeUtil.OBJECT_TYPE.equals(schema.getType()) && !(schema instanceof MapSchema)) ||
-                // must have at least one property
-                (schema.getType() == null && schema.getProperties() != null && !schema.getProperties().isEmpty());
+        if (schema instanceof ObjectSchema) {
+            return true;
+        }
+
+        // must not be a map
+        if (SchemaTypeUtil.OBJECT_TYPE.equals(schema.getType()) && !(schema instanceof MapSchema)) {
+            return true;
+        }
+
+        if (SchemaTypeUtil.OBJECT_TYPE.equals(getJsonSchemaOneTypeOnly(schema))) {
+            return true;
+        }
+
+        // must have at least one property
+        if (schema.getType() == null && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -504,21 +520,21 @@ public class ModelUtils {
      * <p>
      * For example, an OpenAPI schema is considered a MapSchema in the following scenarios:
      * <p>
-     *
-     *   type: object
-     *   additionalProperties: true
-     *
-     *   type: object
-     *   additionalProperties:
-     *     type: object
-     *     properties:
-     *       code:
-     *         type: integer
-     *
-     *   allOf:
-     *     - $ref: '#/components/schemas/Class1'
-     *     - $ref: '#/components/schemas/Class2'
-     *   additionalProperties: true
+     * <p>
+     * type: object
+     * additionalProperties: true
+     * <p>
+     * type: object
+     * additionalProperties:
+     * type: object
+     * properties:
+     * code:
+     * type: integer
+     * <p>
+     * allOf:
+     * - $ref: '#/components/schemas/Class1'
+     * - $ref: '#/components/schemas/Class2'
+     * additionalProperties: true
      *
      * @param schema the OAS schema
      * @return true if the specified schema is a Map schema.
@@ -557,7 +573,7 @@ public class ModelUtils {
      */
     public static String getJsonSchemaOneTypeOnly(Schema schema) {
         if (isJsonSchema(schema) && schema.getTypes() != null && schema.getTypes().size() == 1) {
-            return (String)schema.getTypes().iterator().next();
+            return (String) schema.getTypes().iterator().next();
         }
         return null;
     }
@@ -565,7 +581,7 @@ public class ModelUtils {
     /**
      * Return true if the specified schema is an array of items.
      * It can be an instance of ArraySchema
-     *  or with OpenAPI3.1, it can be a JsonSchema with a type "array" 
+     * or with OpenAPI3.1, it can be a JsonSchema with a type "array"
      *
      * @param schema the OAS schema
      * @return true if the specified schema is an Array schema.
@@ -575,7 +591,7 @@ public class ModelUtils {
             return true;
         }
 
-        return StringUtils.equals(getJsonSchemaOneTypeOnly(schema), "array");
+        return "array".equals(getJsonSchemaOneTypeOnly(schema));
     }
 
     /**
@@ -602,90 +618,139 @@ public class ModelUtils {
     }
 
     public static boolean isStringSchema(Schema schema) {
-        return schema instanceof StringSchema || SchemaTypeUtil.STRING_TYPE.equals(schema.getType());
+        if (schema instanceof StringSchema || SchemaTypeUtil.STRING_TYPE.equals(schema.getType())) {
+            return true;
+        }
+        return SchemaTypeUtil.STRING_TYPE.equals(getJsonSchemaOneTypeOnly(schema));
     }
 
     public static boolean isIntegerSchema(Schema schema) {
-        return schema instanceof IntegerSchema || SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType());
+        if (schema instanceof IntegerSchema) {
+            return true;
+        }
+        if (SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType())) {
+            return true;
+        }
+        return SchemaTypeUtil.INTEGER_TYPE.equals(getJsonSchemaOneTypeOnly(schema));
     }
 
     public static boolean isShortSchema(Schema schema) {
-        // format: short (int32)
-        return SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType()) // type: integer
+        return (SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType())
+                || SchemaTypeUtil.INTEGER_TYPE.equals(getJsonSchemaOneTypeOnly(schema)))// type: integer
                 && SchemaTypeUtil.INTEGER32_FORMAT.equals(schema.getFormat());
     }
 
     public static boolean isUnsignedIntegerSchema(Schema schema) {
-        return SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType()) && // type: integer
+        return (SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType())
+                || SchemaTypeUtil.INTEGER_TYPE.equals(getJsonSchemaOneTypeOnly(schema))) && // type: integer
                 ("int32".equals(schema.getFormat()) || schema.getFormat() == null) && // format: int32
                 (schema.getExtensions() != null && (Boolean) schema.getExtensions().getOrDefault("x-unsigned", Boolean.FALSE));
     }
 
     public static boolean isLongSchema(Schema schema) {
         // format: long (int64)
-        return SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType()) // type: integer
+        return (SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType())
+                || SchemaTypeUtil.INTEGER_TYPE.equals(getJsonSchemaOneTypeOnly(schema)))// type: integer
                 && SchemaTypeUtil.INTEGER64_FORMAT.equals(schema.getFormat());
     }
 
     public static boolean isUnsignedLongSchema(Schema schema) {
-        return SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType()) && // type: integer
+        return (SchemaTypeUtil.INTEGER_TYPE.equals(schema.getType())
+                || SchemaTypeUtil.INTEGER_TYPE.equals(getJsonSchemaOneTypeOnly(schema))) && // type: integer
                 "int64".equals(schema.getFormat()) && // format: int64
                 (schema.getExtensions() != null && (Boolean) schema.getExtensions().getOrDefault("x-unsigned", Boolean.FALSE));
     }
 
     public static boolean isBooleanSchema(Schema schema) {
-        return schema instanceof BooleanSchema || SchemaTypeUtil.BOOLEAN_TYPE.equals(schema.getType());
+        if (schema instanceof BooleanSchema) {
+            return true;
+        }
+        if (SchemaTypeUtil.BOOLEAN_TYPE.equals(schema.getType())) {
+            return true;
+        }
+        return SchemaTypeUtil.BOOLEAN_TYPE.equals(getJsonSchemaOneTypeOnly(schema));
     }
 
     public static boolean isNumberSchema(Schema schema) {
-        return schema instanceof NumberSchema || SchemaTypeUtil.NUMBER_TYPE.equals(schema.getType());
+        if (schema instanceof NumberSchema) {
+            return true;
+        }
+        if (SchemaTypeUtil.NUMBER_TYPE.equals(schema.getType())) {
+            return true;
+        }
+        return SchemaTypeUtil.NUMBER_TYPE.equals(getJsonSchemaOneTypeOnly(schema));
     }
 
     public static boolean isFloatSchema(Schema schema) {
-        // format: float
-        return SchemaTypeUtil.NUMBER_TYPE.equals(schema.getType())
-                && SchemaTypeUtil.FLOAT_FORMAT.equals(schema.getFormat());
+        if (isNumberSchema(schema)
+                && SchemaTypeUtil.FLOAT_FORMAT.equals(schema.getFormat())) { // format: float
+            return true;
+        }
+        return false;
     }
 
     public static boolean isDoubleSchema(Schema schema) {
-        // format: double
-        return SchemaTypeUtil.NUMBER_TYPE.equals(schema.getType())
-                && SchemaTypeUtil.DOUBLE_FORMAT.equals(schema.getFormat());
+        if (isNumberSchema(schema)
+                && SchemaTypeUtil.DOUBLE_FORMAT.equals(schema.getFormat())) { // format: double
+            return true;
+        }
+        return false;
     }
 
     public static boolean isDateSchema(Schema schema) {
-        return (schema instanceof DateSchema) ||
-                // format: date
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.DATE_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof DateSchema) {
+            return true;
+        }
+
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.DATE_FORMAT.equals(schema.getFormat())) { // format: date
+            return true;
+        }
+        return false;
     }
 
     public static boolean isDateTimeSchema(Schema schema) {
-        return (schema instanceof DateTimeSchema) ||
-                // format: date-time
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.DATE_TIME_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof DateTimeSchema) {
+            return true;
+        }
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.DATE_TIME_FORMAT.equals(schema.getFormat())) { // format: date-time
+            return true;
+        }
+        return false;
     }
 
     public static boolean isPasswordSchema(Schema schema) {
-        return (schema instanceof PasswordSchema) ||
-                // double
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.PASSWORD_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof PasswordSchema) {
+            return true;
+        }
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.PASSWORD_FORMAT.equals(schema.getFormat())) { // double
+            return true;
+        }
+        return false;
     }
 
     public static boolean isByteArraySchema(Schema schema) {
-        return (schema instanceof ByteArraySchema) ||
-                // format: byte
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.BYTE_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof ByteArraySchema) {
+            return true;
+        }
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.BYTE_FORMAT.equals(schema.getFormat())) { // format: byte
+            return true;
+        }
+        return false;
     }
 
     public static boolean isBinarySchema(Schema schema) {
-        return (schema instanceof BinarySchema) ||
-                // format: binary
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.BINARY_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof BinarySchema) {
+            return true;
+        }
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.BINARY_FORMAT.equals(schema.getFormat())) { // format: binary
+            return true;
+        }
+        return false;
     }
 
     public static boolean isFileSchema(Schema schema) {
@@ -695,29 +760,41 @@ public class ModelUtils {
     }
 
     public static boolean isUUIDSchema(Schema schema) {
-        return (schema instanceof UUIDSchema) ||
-                // format: uuid
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.UUID_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof UUIDSchema) {
+            return true;
+        }
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.UUID_FORMAT.equals(schema.getFormat())) { // format: uuid
+            return true;
+        }
+        return false;
     }
 
     public static boolean isURISchema(Schema schema) {
-        // format: uri
-        return SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                && URI_FORMAT.equals(schema.getFormat());
+        if (isStringSchema(schema)
+                && URI_FORMAT.equals(schema.getFormat())) { // format: uri
+            return true;
+        }
+        return false;
     }
 
     public static boolean isEmailSchema(Schema schema) {
-        return (schema instanceof EmailSchema) ||
-                // format: email
-                (SchemaTypeUtil.STRING_TYPE.equals(schema.getType())
-                        && SchemaTypeUtil.EMAIL_FORMAT.equals(schema.getFormat()));
+        if (schema instanceof EmailSchema) {
+            return true;
+        }
+        if (isStringSchema(schema)
+                && SchemaTypeUtil.EMAIL_FORMAT.equals(schema.getFormat())) { // format: email
+            return true;
+        }
+        return false;
     }
 
     public static boolean isDecimalSchema(Schema schema) {
-        // format: number
-        return SchemaTypeUtil.STRING_TYPE.equals(schema.getType()) // type: string
-                && "number".equals(schema.getFormat());
+        if (isStringSchema(schema) // type: string
+                && "number".equals(schema.getFormat())) { // format: number
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -730,8 +807,8 @@ public class ModelUtils {
         return (schema != null) &&
                 // has properties
                 ((null != schema.getProperties() && !schema.getProperties().isEmpty())
-                // composed schema is a model, consider very simple ObjectSchema a model
-                || (schema instanceof ComposedSchema || schema instanceof ObjectSchema));
+                        // composed schema is a model, consider very simple ObjectSchema a model
+                        || (schema instanceof ComposedSchema || schema instanceof ObjectSchema));
     }
 
     /**
@@ -778,21 +855,21 @@ public class ModelUtils {
      * Examples:
      * <p>
      * components:
-     *   schemas:
-     *     arbitraryObject:
-     *       type: object
-     *       description: This is a free-form object.
-     *         The value must be a map of strings to values. The value cannot be 'null'.
-     *         It cannot be array, string, integer, number.
-     *     arbitraryNullableObject:
-     *       type: object
-     *       description: This is a free-form object.
-     *         The value must be a map of strings to values. The value can be 'null',
-     *         It cannot be array, string, integer, number.
-     *       nullable: true
-     *     arbitraryTypeValue:
-     *       description: This is NOT a free-form object.
-     *         The value can be any type except the 'null' value.
+     * schemas:
+     * arbitraryObject:
+     * type: object
+     * description: This is a free-form object.
+     * The value must be a map of strings to values. The value cannot be 'null'.
+     * It cannot be array, string, integer, number.
+     * arbitraryNullableObject:
+     * type: object
+     * description: This is a free-form object.
+     * The value must be a map of strings to values. The value can be 'null',
+     * It cannot be array, string, integer, number.
+     * nullable: true
+     * arbitraryTypeValue:
+     * description: This is NOT a free-form object.
+     * The value can be any type except the 'null' value.
      *
      * @param openAPI the object that encapsulates the OAS document.
      * @param schema  potentially containing a '$ref'
@@ -815,7 +892,7 @@ public class ModelUtils {
         }
 
         // has at least one property
-        if ("object".equals(schema.getType())) {
+        if ("object".equals(schema.getType()) || "object".equals(getJsonSchemaOneTypeOnly(schema))) {
             // no properties
             if ((schema.getProperties() == null || schema.getProperties().isEmpty())) {
                 Schema addlProps = getAdditionalProperties(openAPI, schema);
@@ -839,7 +916,9 @@ public class ModelUtils {
                         return objSchema.getProperties() == null || objSchema.getProperties().isEmpty();
                     } else if (addlProps instanceof Schema) {
                         // additionalProperties defined as {}
-                        return addlProps.getType() == null && addlProps.get$ref() == null && (addlProps.getProperties() == null || addlProps.getProperties().isEmpty());
+                        if (addlProps.getType() == null && addlProps.getTypes() == null && addlProps.get$ref() == null && (addlProps.getProperties() == null || addlProps.getProperties().isEmpty())) {
+                            return true;
+                        }
                     }
                 }
             }
@@ -1040,13 +1119,13 @@ public class ModelUtils {
      * for the 'application/json' content type because it is listed first in the OAS.
      * <p>
      * responses:
-     *   '200':
-     *     content:
-     *       application/json:
-     *         schema:
-     *           $ref: '#/components/schemas/XYZ'
-     *       application/xml:
-     *          ...
+     * '200':
+     * content:
+     * application/json:
+     * schema:
+     * $ref: '#/components/schemas/XYZ'
+     * application/xml:
+     * ...
      *
      * @param content a 'content' section in the OAS specification.
      * @return the Schema.
@@ -1361,19 +1440,19 @@ public class ModelUtils {
      * because 'Animal' specifies a discriminator.
      * <p>
      * animal:
-     *   type: object
-     *   discriminator:
-     *     propertyName: type
-     *   properties:
-     *     type: string
+     * type: object
+     * discriminator:
+     * propertyName: type
+     * properties:
+     * type: string
      *
      * <p>
      * dog:
-     *   allOf:
-     *      - $ref: '#/components/schemas/animal'
-     *      - type: object
-     *        properties:
-     *          breed: string
+     * allOf:
+     * - $ref: '#/components/schemas/animal'
+     * - type: object
+     * properties:
+     * breed: string
      *
      * @param composedSchema schema (alias or direct reference)
      * @param allSchemas     all schemas
@@ -1498,7 +1577,7 @@ public class ModelUtils {
      * If it's string, return true if it's non-empty.
      * If the return value is `true`, the schema is a parent.
      *
-     * @param schema    Schema
+     * @param schema Schema
      * @return boolean
      */
     public static boolean isExtensionParent(Schema schema) {
@@ -1565,9 +1644,9 @@ public class ModelUtils {
      * type is one of the elements under 'oneOf'.
      * <p>
      * OptionalOrder:
-     *   oneOf:
-     *     - type: 'null'
-     *     - $ref: '#/components/schemas/Order'
+     * oneOf:
+     * - type: 'null'
+     * - $ref: '#/components/schemas/Order'
      *
      * @param schema the OAS composed schema.
      * @return true if the composed schema is nullable.
@@ -1602,7 +1681,10 @@ public class ModelUtils {
      * @return true if the schema is the 'null' type
      */
     public static boolean isNullType(Schema schema) {
-        return "null".equals(schema.getType());
+        if ("null".equals(schema.getType()) || "null".equals(getJsonSchemaOneTypeOnly(schema))) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -1618,7 +1700,7 @@ public class ModelUtils {
         // TODO remove the ref check here, or pass in the spec version
         // openapi 3.1.0 specs allow ref to be adjacent to any keyword
         // openapi 3.0.3 and earlier do not allow adjacent keywords to refs
-        return (schema.get$ref() == null && schema.getType() == null);
+        return (schema.get$ref() == null && schema.getType() == null && schema.getTypes() == null);
     }
 
     public static void syncValidationProperties(Schema schema, IJsonSchemaValidationProperties target) {
@@ -1750,7 +1832,7 @@ public class ModelUtils {
     private static void logWarnMessagesForIneffectiveValidations(Set<String> setValidations, Schema schema, Set<String> effectiveValidations) {
         setValidations.removeAll(effectiveValidations);
         setValidations.stream().forEach(validation -> {
-            LOGGER.warn("Validation '" + validation + "' has no effect on schema '"+ schema.getType() +"'. Ignoring!");
+            LOGGER.warn("Validation '" + validation + "' has no effect on schema '" + schema.getType() + "'. Ignoring!");
         });
     }
 
@@ -1962,7 +2044,6 @@ public class ModelUtils {
      * Returns true if the schema is a parent (with discriminator).
      *
      * @param schema the schema.
-     *
      * @return true if the schema is a parent.
      */
     public static boolean isParent(Schema schema) {

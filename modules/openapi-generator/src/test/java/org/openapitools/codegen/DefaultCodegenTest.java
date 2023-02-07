@@ -4742,7 +4742,7 @@ public class DefaultCodegenTest {
     }
 
     @Test
-    public void testOpenAPI310ResponsesJsonSchemaIsArray() {
+    public void testOpenAPI310JsonSchemaIsArrayRef() {
         final OpenAPI openAPI = TestUtils.parseFlattenSpec("src/test/resources/3_1/petstore.yaml");
         final DefaultCodegen codegen = new DefaultCodegen();
         codegen.setOpenAPI(openAPI);
@@ -4753,5 +4753,24 @@ public class DefaultCodegenTest {
         final CodegenOperation co = codegen.fromOperation(path, "get", operation, null);
 
         Assert.assertTrue(co.responses.get(0).isArray);
+        Assert.assertEquals(co.responses.get(0).dataType, "List");
+        Assert.assertEquals(co.responses.get(0).baseType, "Pet");
+    }
+
+    @Test
+    public void testOpenAPI310JsonSchemaArrayString() {
+        final OpenAPI openAPI = TestUtils.parseFlattenSpec("src/test/resources/3_1/petstore.yaml");
+        final DefaultCodegen codegen = new DefaultCodegen();
+        codegen.setOpenAPI(openAPI);
+
+        final String path = "/pet/findByTags";
+
+        final Operation operation = openAPI.getPaths().get(path).getGet();
+        final CodegenOperation co = codegen.fromOperation(path, "get", operation, null);
+
+        Assert.assertTrue(co.queryParams.get(0).isArray);
+        Assert.assertEquals(co.queryParams.get(0).dataType, "List");
+        Assert.assertEquals(co.queryParams.get(0).baseType, "String");
+        Assert.assertTrue(co.queryParams.get(0).items.isString);
     }
 }
