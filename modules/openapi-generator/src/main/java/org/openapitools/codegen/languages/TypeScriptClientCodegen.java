@@ -825,7 +825,7 @@ public class TypeScriptClientCodegen extends AbstractTypeScriptClientCodegen imp
             }
             return example;
         } else if (ModelUtils.isComposedSchema(schema)) {
-            ComposedSchema cm = (ComposedSchema) schema;
+            Schema cm = schema;
             List<Schema> ls = cm.getOneOf();
             if (ls != null && !ls.isEmpty()) {
                 return fullPrefix + toExampleValue(ls.get(0)) + closeChars;

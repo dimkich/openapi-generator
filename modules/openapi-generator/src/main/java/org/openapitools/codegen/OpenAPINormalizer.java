@@ -375,10 +375,10 @@ public class OpenAPINormalizer {
         } else if (ModelUtils.isAllOf(schema)) { // allOf
             return normalizeAllOf(schema, visitedSchemas);
         } else if (ModelUtils.isComposedSchema(schema)) { // composed schema
-            ComposedSchema cs = (ComposedSchema) schema;
+            Schema<?> cs = schema;
 
             if (ModelUtils.isComplexComposedSchema(cs)) {
-                cs = (ComposedSchema) normalizeComplexComposedSchema(cs, visitedSchemas);
+                cs = normalizeComplexComposedSchema(cs, visitedSchemas);
             }
 
             if (cs.getAllOf() != null && !cs.getAllOf().isEmpty()) {

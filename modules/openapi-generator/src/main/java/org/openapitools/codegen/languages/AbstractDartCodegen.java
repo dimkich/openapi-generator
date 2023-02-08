@@ -575,9 +575,9 @@ public abstract class AbstractDartCodegen extends DefaultCodegen {
     public CodegenProperty fromProperty(String name, Schema p, boolean required) {
         final CodegenProperty property = super.fromProperty(name, p, required);
 
-        // Handle composed properties and it's NOT allOf with a single ref only
+        // Handle composed properties
         if (ModelUtils.isComposedSchema(p) && !(ModelUtils.isAllOf(p) && p.getAllOf().size() == 1)) {
-            ComposedSchema composed = (ComposedSchema) p;
+            Schema<?> composed = p;
 
             // Count the occurrences of allOf/anyOf/oneOf with exactly one child element
             long count = Stream.of(composed.getAllOf(), composed.getAnyOf(), composed.getOneOf())
