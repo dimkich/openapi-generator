@@ -513,7 +513,7 @@ public class N4jsClientCodegen extends DefaultCodegen implements CodegenConfig {
     @Override
     public String getTypeDeclaration(Schema p) {
         if (ModelUtils.isArraySchema(p)) {
-            Schema<?> items = getSchemaItems((ArraySchema) p);
+            Schema<?> items = ModelUtils.getArrayItems(p);
             return getTypeDeclaration(unaliasSchema(items)) + "[]";
         } else if (ModelUtils.isMapSchema(p)) {
             return "~Object+";
