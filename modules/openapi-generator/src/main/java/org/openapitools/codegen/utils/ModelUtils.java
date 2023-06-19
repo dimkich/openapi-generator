@@ -377,9 +377,9 @@ public class ModelUtils {
             once(LOGGER).warn("Failed to get the schema name: null");
             //throw new RuntimeException("Failed to get the schema: null");
             return null;
-        } else if (ref.startsWith("#/components/")) {
+        } else if (ref.contains("#/components/")) {
             ref = ref.substring(ref.lastIndexOf("/") + 1);
-        } else if (ref.startsWith("#/definitions/")) {
+        } else if (ref.contains("#/definitions/")) {
             ref = ref.substring(ref.lastIndexOf("/") + 1);
         } else {
             once(LOGGER).warn("Failed to get the schema name: {}", ref);

@@ -2831,7 +2831,7 @@ public class DefaultCodegen implements CodegenConfig {
             Schema existingType = existingProperties.get("type");
             Schema newType = newProperties.get("type");
             existingProperties.putAll(newProperties);
-            if (null != existingType && null != newType && !newType.getEnum().isEmpty()) {
+            if (null != existingType && null != newType && newType.getEnum() != null && !newType.getEnum().isEmpty()) {
                 for (Object e : newType.getEnum()) {
                     // ensure all interface enum types are added to schema
                     if (null != existingType.getEnum() && !existingType.getEnum().contains(e)) {

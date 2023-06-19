@@ -671,7 +671,7 @@ public class OpenAPINormalizer {
 
     /**
      * Check if the schema is of type 'null'
-     *
+     * <p>
      * Return true if the schema's type is 'null' or not specified
      *
      * @param schema Schema
@@ -680,8 +680,12 @@ public class OpenAPINormalizer {
         if (schema == null) {
             return true;
         }
+        String type = schema.getType();
+        if (type == null) {
+            type = ModelUtils.getJsonSchemaOneTypeOnly(schema);
+        }
 
-        if ((schema.getType() == null || schema.getType().equals("null")) && schema.get$ref() == null) {
+        if ((type == null || type.equals("null")) && schema.get$ref() == null) {
             return true;
         }
 
