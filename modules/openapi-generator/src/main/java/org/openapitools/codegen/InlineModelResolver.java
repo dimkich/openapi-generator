@@ -544,7 +544,22 @@ public class InlineModelResolver {
         for (Map.Entry<String, ApiResponse> responsesEntry : responses.entrySet()) {
             String key = responsesEntry.getKey();
             ApiResponse response = responsesEntry.getValue();
-
+            if (response.get$ref() != null) {
+                ApiResponse resolved = null;
+                if (openAPI.getComponents().getResponses() != null) {
+                    resolved = openAPI.getComponents().getResponses().get(ModelUtils.getSimpleRef(response.get$ref()));
+                }
+                if (resolved == null) {
+                    LOGGER.error("Not found response " + response.get$ref());
+                    return;
+                }
+                response.description(resolved.getDescription())
+                        .headers(resolved.getHeaders())
+                        .content(resolved.getContent())
+                        .links(resolved.getLinks())
+                        .extensions(resolved.getExtensions())
+                        .$ref(resolved.get$ref());
+            }
             flattenContent(response.getContent(),
                     (operation.getOperationId() == null ? modelName : operation.getOperationId()) + "_" + key + "_response");
         }
